@@ -2,14 +2,15 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package main
+package mailslurper
 
 import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
+
 	"github.com/mailslurper/mailslurper/pkg/auth/authscheme"
 	"github.com/mailslurper/mailslurper/pkg/contexts"
 )

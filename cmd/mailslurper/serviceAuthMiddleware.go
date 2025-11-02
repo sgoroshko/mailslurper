@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package main
+package mailslurper
 
 import (
 	"net/http"
@@ -10,6 +10,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
+
 	"github.com/mailslurper/mailslurper/pkg/auth/authscheme"
 	jwtservice "github.com/mailslurper/mailslurper/pkg/auth/jwt"
 	"github.com/mailslurper/mailslurper/pkg/contexts"

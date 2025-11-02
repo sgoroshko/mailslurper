@@ -5,7 +5,6 @@
 package ui
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -14,16 +13,14 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-/*
-StartBrowser opens the user's default browser to the configured URL
-*/
+// StartBrowser
 func StartBrowser(config *mailslurper.Configuration, logger *logrus.Entry) {
 	timer := time.NewTimer(time.Second)
 
 	go func() {
 		<-timer.C
-		logger.Infof("Opening web browser to http://%s:%d", config.WWWAddress, config.WWWPort)
-		err := open.Start(fmt.Sprintf("http://%s:%d", config.WWWAddress, config.WWWPort))
+		logger.Infof("opening web browser to %s", config.GetPublicWWWURL())
+		err := open.Start(config.GetPublicWWWURL())
 		if err != nil {
 			logger.Infof("ERROR - Could not open browser - %s", err.Error())
 		}

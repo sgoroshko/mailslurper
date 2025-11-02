@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -21,21 +20,19 @@ configuration file with settings for how to bind
 servers and connect to databases.
 */
 type Configuration struct {
-	WWWAddress       string `json:"wwwAddress"`
-	WWWPort          int    `json:"wwwPort"`
-	WWWPublicURL     string `json:"wwwPublicURL"`
-	ServiceAddress   string `json:"serviceAddress"`
-	ServicePort      int    `json:"servicePort"`
-	ServicePublicURL string `json:"servicePublicURL"`
-	SMTPAddress      string `json:"smtpAddress"`
-	SMTPPort         int    `json:"smtpPort"`
-	DBEngine         string `json:"dbEngine"`
-	DBHost           string `json:"dbHost"`
-	DBPort           int    `json:"dbPort"`
-	DBDatabase       string `json:"dbDatabase"`
-	DBUserName       string `json:"dbUserName"`
-	DBPassword       string `json:"dbPassword"`
-	MaxWorkers       int    `json:"maxWorkers"`
+	WWWListen     string `json:"WWWListen"`
+	WWWPublic     string `json:"WWWPublic"`
+	ServiceListen string `json:"ServiceListen"`
+	ServicePublic string `json:"ServicePublic"`
+	SMTPListen    string `json:"SMTPListen"`
+
+	DBEngine   string `json:"dbEngine"`
+	DBHost     string `json:"dbHost"`
+	DBPort     int    `json:"dbPort"`
+	DBDatabase string `json:"dbDatabase"`
+	DBUserName string `json:"dbUserName"`
+	DBPassword string `json:"dbPassword"`
+
 	AutoStartBrowser bool   `json:"autoStartBrowser"`
 	CertFile         string `json:"certFile"`
 	KeyFile          string `json:"keyFile"`
@@ -69,10 +66,7 @@ var ErrMissingAuthSecret = fmt.Errorf("Missing authentication secret. An authent
 var ErrMissingAuthSalt = fmt.Errorf("Missing authentication salt. A salt value is required when authentication is enabled: authSalt")
 var ErrNoUsersConfigured = fmt.Errorf("No users configured. When authentication is enabled you must have at least 1 valid user: credentials")
 
-/*
-GetDatabaseConfiguration returns a pointer to a DatabaseConnection structure with data
-pulled from a Configuration structure.
-*/
+// GetDatabaseConfiguration
 func (config *Configuration) GetDatabaseConfiguration() (StorageType, *ConnectionInformation) {
 	connectionInformation := NewConnectionInformation(config.DBHost, config.DBPort)
 	connectionInformation.SetDatabaseInformation(config.DBDatabase, config.DBUserName, config.DBPassword)
@@ -89,69 +83,58 @@ func (config *Configuration) GetDatabaseConfiguration() (StorageType, *Connectio
 	return result, connectionInformation
 }
 
-/*
-GetFullServiceAppAddress returns a full address and port for the MailSlurper service
-application.
-*/
+// GetFullServiceAppAddress
 func (config *Configuration) GetFullServiceAppAddress() string {
-	return fmt.Sprintf("%s:%d", config.ServiceAddress, config.ServicePort)
+	return config.ServiceListen
 }
 
-/*
-GetFullSMTPBindingAddress returns a full address and port for the MailSlurper SMTP
-server.
-*/
+// GetFullSMTPBindingAddress
 func (config *Configuration) GetFullSMTPBindingAddress() string {
-	return fmt.Sprintf("%s:%d", config.SMTPAddress, config.SMTPPort)
+	return config.SMTPListen
 }
 
-/*
-GetFullWWWBindingAddress returns a full address and port for the Web application.
-*/
+// GetFullWWWBindingAddress
 func (config *Configuration) GetFullWWWBindingAddress() string {
-	return fmt.Sprintf("%s:%d", config.WWWAddress, config.WWWPort)
+	return config.WWWListen
 }
 
-/*
-GetPublicServiceURL returns a full protocol, address, and port for the MailSlurper service
-*/
+// GetPublicServiceURL
 func (config *Configuration) GetPublicServiceURL() string {
-	if config.ServicePublicURL != "" {
-		return config.ServicePublicURL
-	}
-
-	result := "http"
-
+	proto := "http://"
 	if config.CertFile != "" && config.KeyFile != "" {
-		result += "s"
+		proto = "https://"
 	}
 
-	result += fmt.Sprintf("://%s:%d", config.ServiceAddress, config.ServicePort)
-	return result
+	if config.ServicePublic != "" {
+		if strings.HasPrefix(config.ServicePublic, "http") {
+			return config.ServicePublic
+		}
+
+		return proto + config.ServicePublic
+	}
+
+	return proto + config.ServiceListen
 }
 
-/*
-GetPublicWWWURL returns a full protocol, address and port for the web application
-*/
+// GetPublicWWWURL
 func (config *Configuration) GetPublicWWWURL() string {
-	if config.WWWPublicURL != "" {
-		return config.WWWPublicURL
-	}
-
-	result := "http"
-
+	proto := "http://"
 	if config.AdminCertFile != "" && config.AdminKeyFile != "" {
-		result += "s"
+		proto = "https://"
 	}
 
-	result += fmt.Sprintf("://%s:%d", config.WWWAddress, config.WWWPort)
-	return result
+	if config.WWWPublic != "" {
+		if strings.HasPrefix(config.WWWPublic, "http") {
+			return config.WWWPublic
+		}
+
+		return proto + config.WWWPublic
+	}
+
+	return proto + config.WWWListen
 }
 
-/*
-GetTheme returns the configured theme. If there isn't one, the
-default theme is used
-*/
+// GetTheme
 func (config *Configuration) GetTheme() string {
 	theme := config.Theme
 
@@ -162,15 +145,13 @@ func (config *Configuration) GetTheme() string {
 	return theme
 }
 
-/*
-LoadConfiguration reads data from a Reader into a new Configuration structure.
-*/
+// LoadConfiguration
 func LoadConfiguration(reader io.Reader) (*Configuration, error) {
 	var err error
 	var buffer = make([]byte, 4096)
 
 	result := &Configuration{}
-	if buffer, err = ioutil.ReadAll(reader); err != nil {
+	if buffer, err = io.ReadAll(reader); err != nil {
 		return result, err
 	}
 
@@ -213,7 +194,7 @@ func (config *Configuration) SaveConfiguration(configFile string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(configFile, serializedConfigFile, 0644)
+	return os.WriteFile(configFile, serializedConfigFile, 0644)
 }
 
 /*
@@ -232,15 +213,15 @@ func (config *Configuration) IsServiceSSL() bool {
 }
 
 func (config *Configuration) Validate() error {
-	if config.WWWAddress == "" {
+	if config.WWWListen == "" {
 		return ErrInvalidAdminAddress
 	}
 
-	if config.ServiceAddress == "" {
+	if config.ServiceListen == "" {
 		return ErrInvalidServiceAddress
 	}
 
-	if config.SMTPAddress == "" {
+	if config.SMTPListen == "" {
 		return ErrInvalidSMTPAddress
 	}
 

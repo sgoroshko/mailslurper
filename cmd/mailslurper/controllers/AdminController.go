@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"github.com/mailslurper/mailslurper/pkg/auth/auth"
 	"github.com/mailslurper/mailslurper/pkg/auth/authfactory"
 	"github.com/mailslurper/mailslurper/pkg/cache"
@@ -28,7 +28,6 @@ type AdminController struct {
 	CacheService   cache.ICacheService
 	Config         *mailslurper.Configuration
 	ConfigFileName string
-	DebugMode      bool
 	Renderer       *ui.TemplateRenderer
 	Lock           *sync.Mutex
 	Logger         *logrus.Entry
@@ -75,7 +74,7 @@ func (c *AdminController) ApplyTheme(ctx echo.Context) error {
 		return context.String(http.StatusOK, fmt.Sprintf("Error saving configuration file: %s", err.Error()))
 	}
 
-	c.Renderer.LoadTemplates(c.DebugMode)
+	c.Renderer.LoadTemplates()
 	return context.String(http.StatusOK, "OK")
 }
 

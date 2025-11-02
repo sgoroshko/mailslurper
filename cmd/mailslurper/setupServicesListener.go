@@ -2,11 +2,12 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package main
+package mailslurper
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/mailslurper/mailslurper/cmd/mailslurper/controllers"
 	"github.com/mailslurper/mailslurper/pkg/auth/authfactory"
 	"github.com/mailslurper/mailslurper/pkg/auth/authscheme"
@@ -30,8 +31,7 @@ func setupServicesListener() {
 		JWTService: &jwt.JWTService{
 			Config: config,
 		},
-		Logger:        mailslurper.GetLogger(*logLevel, *logFormat, "ServiceController"),
-		ServerVersion: SERVER_VERSION,
+		Logger: mailslurper.GetLogger(logLevel, logFormat, "ServiceController"),
 	}
 
 	service = echo.New()

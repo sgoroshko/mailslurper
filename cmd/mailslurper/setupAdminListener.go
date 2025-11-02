@@ -2,19 +2,20 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package main
+package mailslurper
 
 import (
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
+
 	"github.com/mailslurper/mailslurper/cmd/mailslurper/controllers"
-	"github.com/mailslurper/mailslurper/cmd/mailslurper/www"
 	"github.com/mailslurper/mailslurper/pkg/auth/authscheme"
 	"github.com/mailslurper/mailslurper/pkg/mailslurper"
+	"github.com/mailslurper/mailslurper/static"
 )
 
 func setupAdminListener() {
@@ -26,19 +27,17 @@ func setupAdminListener() {
 	adminController := &controllers.AdminController{
 		CacheService:   cacheService,
 		Config:         config,
-		ConfigFileName: CONFIGURATION_FILE_NAME,
-		DebugMode:      DEBUG_ASSETS,
+		ConfigFileName: configFile,
 		Renderer:       renderer,
 		Lock:           &sync.Mutex{},
-		Logger:         mailslurper.GetLogger(*logLevel, *logFormat, "AdminController"),
-		ServerVersion:  SERVER_VERSION,
+		Logger:         mailslurper.GetLogger(logLevel, logFormat, "AdminController"),
 	}
 
 	admin = echo.New()
 	admin.HideBanner = true
 	admin.Renderer = renderer
 
-	assetHandler := http.FileServer(www.FS(DEBUG_ASSETS))
+	assetHandler := http.FileServerFS(static.Files)
 	admin.GET("/www/*", echo.WrapHandler(assetHandler))
 
 	if config.AuthenticationScheme != authscheme.NONE {

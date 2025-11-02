@@ -1,0 +1,53 @@
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME}-default
+    driver: bridge
+  ingress:
+    external: true
+    name: sandbox-docker-ingress-traefik
+    driver: bridge
+
+volumes:
+  data:
+    driver: local
+
+services:
+  mailslurper:
+    container_name: ${COMPOSE_PROJECT_NAME}-mailslurper
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: >-
+      server
+      --debug
+      --smtp.ln=0.0.0.0:2500
+      --admin.ln=0.0.0.0:8080
+      --admin.pub=mailslurper.mycluster
+      --api.ln=0.0.0.0:8081
+      --api.pub=mailslurper-api.mycluster
+    volumes:
+      - data:/app/data
+    networks:
+      - ingress
+      - default
+    expose:
+      - 2500
+      - 8080
+      - 8081
+    ports:
+      - '2500:2500'
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:8080
+      interval: 6s
+      timeout: 2s
+      retries: 2
+      start_period: 20s
+    labels:
+      traefik.enable: true
+      traefik.http.routers.mailslurper-admin.rule: Host(`mailslurper.mycluster`)
+      traefik.http.services.mailslurper-admin.loadBalancer.server.port: 8080
+      traefik.http.routers.mailslurper-admin.service: mailslurper-admin
+      traefik.http.routers.mailslurper-api.rule: Host(`mailslurper-api.mycluster`)
+      traefik.http.services.mailslurper-api.loadBalancer.server.port: 8081
+      traefik.http.routers.mailslurper-api.service: mailslurper-api

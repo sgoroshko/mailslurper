@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-package main
+package mailslurper
 
 import (
 	"context"
@@ -21,13 +21,14 @@ func setupSMTP() {
 	/*
 	 * Setup the server pool
 	 */
-	pool := mailslurper.NewServerPool(mailslurper.GetLogger(*logLevel, *logFormat, "SMTP Server Pool"), config.MaxWorkers, *logLevel, *logFormat)
+	const workers = 20
+	pool := mailslurper.NewServerPool(mailslurper.GetLogger(logLevel, logFormat, "SMTP Server Pool"), workers, logLevel, logFormat)
 
 	/*
 	 * Setup receivers (subscribers) to handle new mail items.
 	 */
 	receivers := []mailslurper.IMailItemReceiver{
-		mailslurper.NewDatabaseReceiver(database, mailslurper.GetLogger(*logLevel, *logFormat, "Database Receiver")),
+		mailslurper.NewDatabaseReceiver(database, mailslurper.GetLogger(logLevel, logFormat, "Database Receiver")),
 	}
 
 	/*
@@ -38,14 +39,14 @@ func setupSMTP() {
 	/*
 	 * Setup the connection manager
 	 */
-	connectionManager = mailslurper.NewConnectionManager(mailslurper.GetLogger(*logLevel, *logFormat, "Connection Manager"), config, smtpListenerContext, mailItemChannel, pool)
+	connectionManager = mailslurper.NewConnectionManager(mailslurper.GetLogger(logLevel, logFormat, "Connection Manager"), config, smtpListenerContext, mailItemChannel, pool)
 
 	/*
 	 * Setup the SMTP listener
 	 */
 
 	if smtpListener, err = mailslurper.NewSMTPListener(
-		mailslurper.GetLogger(*logLevel, *logFormat, "SMTP Listener"),
+		mailslurper.GetLogger(logLevel, logFormat, "SMTP Listener"),
 		config,
 		mailItemChannel,
 		pool,

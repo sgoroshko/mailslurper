@@ -4,18 +4,18 @@
 
 package contexts
 
-import echo "github.com/labstack/echo/v4"
+import "github.com/labstack/echo/v4"
 
+// AdminUserContext
 type AdminUserContext struct {
 	echo.Context
 	User string
 }
 
+// GetAdminContext
 func GetAdminContext(ctx echo.Context) *AdminUserContext {
-	var ok bool
-
-	if _, ok = ctx.(*AdminUserContext); ok {
-		return ctx.(*AdminUserContext)
+	if vv, ok := ctx.(*AdminUserContext); ok {
+		return vv
 	}
 
 	return &AdminUserContext{
