@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.app
     command: >-
       server
       --debug
